@@ -1,0 +1,31 @@
+debug = true
+
+[server]
+host = "127.0.0.1"
+port = 3000
+base_url = "http://localhost:3000"
+
+[server.cookies]
+
+[server.cookies.csrf]
+domain = ""
+secure = false
+same_site = "Lax"
+
+[server.cookies.access_token]
+domain = ""
+secure = false
+same_site = "Lax"
+
+[server.cookies.refresh_token]
+domain = ""
+secure = false
+same_site = "Lax"
+
+[server.cookies.id_token]
+domain = ""
+secure = false
+same_site = "Lax"
+
+[oauth]
+authorization_redirect_uri = "http://localhost:3000/oauth/callback"
