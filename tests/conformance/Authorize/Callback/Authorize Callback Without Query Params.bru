@@ -1,0 +1,14 @@
+meta {
+  name: Authorize Callback Without Query Params
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/oauth/callback
+}
+
+assert {
+  res.status: eq 400
+  res.headers.location: undefined
+}
