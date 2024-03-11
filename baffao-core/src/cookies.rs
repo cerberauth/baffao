@@ -1,10 +1,7 @@
-use cookie::Cookie;
 use crate::settings;
+use cookie::Cookie;
 
-pub fn new_cookie(
-    config: settings::CookieConfig,
-    value: String,
-) -> Cookie<'static> {
+pub fn new_cookie(config: settings::CookieConfig, value: String) -> Cookie<'static> {
     Cookie::build((config.name, value))
         .domain(config.domain)
         .path("/")

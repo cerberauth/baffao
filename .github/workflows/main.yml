@@ -1,0 +1,22 @@
+name: "Test Suite"
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: cargo fmt & test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
+
+      - run: cargo test --all-features

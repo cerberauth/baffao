@@ -21,7 +21,11 @@ impl ServerConfig {
     }
 
     pub fn domain(&self) -> String {
-        Url::parse(&self.base_url).unwrap().domain().unwrap().to_string()
+        Url::parse(&self.base_url)
+            .unwrap()
+            .domain()
+            .unwrap()
+            .to_string()
     }
 }
 

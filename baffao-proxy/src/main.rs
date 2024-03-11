@@ -3,7 +3,7 @@ mod oauth;
 mod settings;
 
 use axum::{
-    error_handling::HandleErrorLayer, extract::FromRef, http::StatusCode, routing::get, Router
+    error_handling::HandleErrorLayer, extract::FromRef, http::StatusCode, routing::get, Router,
 };
 use baffao_core::oauth::client::OAuthClient;
 use std::time::Duration;
@@ -54,9 +54,11 @@ async fn main() {
         )
         .with_state(app_state);
 
-    let listener = tokio::net::TcpListener::bind(settings.server.host + ":" + &settings.server.port.to_string())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(
+        settings.server.host + ":" + &settings.server.port.to_string(),
+    )
+    .await
+    .unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

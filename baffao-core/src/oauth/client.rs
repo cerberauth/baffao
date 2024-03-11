@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use anyhow::Context;
 use oauth2::{
-    basic::{BasicClient, BasicTokenType}, reqwest::async_http_client, AccessToken, AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl, RefreshToken, Scope, StandardErrorResponse, TokenResponse, TokenUrl
+    basic::BasicClient, reqwest::async_http_client, AccessToken, AuthType, AuthUrl,
+    AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl, RefreshToken, Scope,
+    TokenResponse, TokenUrl,
 };
 use reqwest::Url;
 
@@ -58,12 +60,17 @@ impl OAuthClient {
         }
 
         let code = AuthorizationCode::new(code);
-        let token = self.client
+        let token = self
+            .client
             .exchange_code(code)
             .request_async(async_http_client)
             .await
             .context("Failed to exchange code")?;
 
-        Ok((token.access_token().clone(), token.refresh_token().cloned(), token.expires_in()))
+        Ok((
+            token.access_token().clone(),
+            token.refresh_token().cloned(),
+            token.expires_in(),
+        ))
     }
 }
