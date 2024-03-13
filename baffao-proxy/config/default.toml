@@ -2,25 +2,25 @@
 [server.cookies]
 
 [server.cookies.csrf]
-name = "baffao.csrf_token"
+name = "oauth.csrf_token"
 secure = true
 http_only = true
 same_site = "Strict"
 
 [server.cookies.access_token]
-name = "baffao.access_token"
+name = "oauth.access_token"
 secure = true
 http_only = true
 same_site = "Strict"
 
 [server.cookies.refresh_token]
-name = "baffao.refresh_token"
+name = "oauth.refresh_token"
 secure = true
 http_only = true
 same_site = "Strict"
 
 [server.cookies.id_token]
-name = "baffao.id_token"
+name = "oauth.id_token"
 secure = true
 http_only = true
 same_site = "Strict"
