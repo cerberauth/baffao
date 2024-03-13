@@ -7,7 +7,8 @@ use axum::{
 };
 use baffao_core::oauth::client::OAuthClient;
 use std::time::Duration;
-use tower::{BoxError, ServiceBuilder};
+use tokio::signal;
+use tower::{timeout::TimeoutLayer, BoxError, ServiceBuilder};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -48,8 +49,10 @@ async fn main() {
                         ))
                     }
                 }))
-                .timeout(Duration::from_secs(10))
-                .layer(TraceLayer::new_for_http())
+                .layer((
+                    TraceLayer::new_for_http(),
+                    TimeoutLayer::new(Duration::from_secs(10)),
+                ))
                 .into_inner(),
         )
         .with_state(app_state);
@@ -60,7 +63,34 @@ async fn main() {
     .await
     .unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }
 
 #[derive(Clone)]
