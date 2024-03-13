@@ -25,5 +25,11 @@ secure = true
 http_only = true
 same_site = "Strict"
 
+[server.cookies.session]
+name = "_session"
+secure = true
+http_only = true
+same_site = "Strict"
+
 [oauth]
 redirect_uri = "/"

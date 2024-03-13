@@ -27,5 +27,10 @@ domain = ""
 secure = false
 same_site = "Lax"
 
+[server.cookies.session]
+domain = ""
+secure = false
+same_site = "Lax"
+
 [oauth]
 authorization_redirect_uri = "http://localhost:3000/oauth/callback"

@@ -1,9 +1,7 @@
 use axum_extra::extract::cookie::SameSite;
-use reqwest::Url;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
+#[derive(Deserialize, Clone)]
 pub struct ServerConfig {
     pub host: String,
     pub port: u16,
@@ -11,46 +9,13 @@ pub struct ServerConfig {
     pub cookies: CookiesConfig,
 }
 
-impl ServerConfig {
-    pub fn base_url(&self) -> String {
-        format!("{}:{}", self.host, self.port)
-    }
-
-    pub fn scheme(&self) -> String {
-        Url::parse(&self.base_url).unwrap().scheme().to_string()
-    }
-
-    pub fn domain(&self) -> String {
-        Url::parse(&self.base_url)
-            .unwrap()
-            .domain()
-            .unwrap()
-            .to_string()
-    }
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
-pub struct OAuthConfig {
-    pub client_id: String,
-    pub client_secret: String,
-    pub metadata_url: Option<String>,
-    pub authorization_redirect_uri: String,
-    pub authorization_url: String,
-    pub token_url: String,
-    pub userinfo_url: Option<String>,
-    pub redirect_uri: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
+#[derive(Deserialize, Clone)]
 pub struct JwtConfig {
     pub secret: String,
     pub issuer: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
+#[derive(Deserialize, Clone)]
 pub struct CookieConfig {
     pub name: String,
     pub domain: String,
@@ -92,11 +57,11 @@ impl CookieConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
+#[derive(Deserialize, Clone)]
 pub struct CookiesConfig {
     pub csrf: CookieConfig,
     pub access_token: CookieConfig,
     pub refresh_token: CookieConfig,
     pub id_token: CookieConfig,
+    pub session: CookieConfig,
 }

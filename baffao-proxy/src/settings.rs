@@ -2,10 +2,12 @@ use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
 use std::env;
 
-use baffao_core::settings::{JwtConfig, OAuthConfig, ServerConfig};
+use baffao_core::{
+    oauth::OAuthConfig,
+    settings::{JwtConfig, ServerConfig},
+};
 
-#[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
+#[derive(Deserialize, Clone)]
 pub struct Settings {
     pub server: ServerConfig,
     pub oauth: OAuthConfig,
