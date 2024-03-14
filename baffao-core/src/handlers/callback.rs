@@ -23,7 +23,8 @@ pub async fn oauth2_callback(
     query: AuthorizationCallbackQuery,
     client: OAuthClient,
     CookiesConfig {
-        csrf: csrf_cookie,
+        oauth_csrf: oauth_csrf_cookie,
+        oauth_pkce: oauth_pkce_cookie,
         access_token: access_token_cookie,
         refresh_token: refresh_token_cookie,
         session: session_cookie,
@@ -31,36 +32,58 @@ pub async fn oauth2_callback(
     }: CookiesConfig,
 ) -> Result<(CookieJar, StatusCode, String), Error> {
     let pkce_code = jar
-        .get(csrf_cookie.name.as_str())
-        .map(|cookie| cookie.value().to_string())
-        .unwrap_or_default();
-    let response = match client
-        .exchange_code(query.code, pkce_code, query.state.clone())
+        .get(oauth_csrf_cookie.name.as_str())
+        .map(|cookie| cookie.value().to_string());
+    if pkce_code.is_none() {
+        return Err(anyhow::anyhow!("CSRF token not found"));
+    } else if pkce_code.unwrap() != query.state {
+        return Err(anyhow::anyhow!("CSRF token mismatch"));
+    }
+
+    let pkce_verifier = jar
+        .get(oauth_pkce_cookie.name.as_str())
+        .map(|cookie| cookie.value().to_string());
+    if pkce_verifier.is_none() {
+        return Err(anyhow::anyhow!("PKCE verifier not found"));
+    }
+
+    if query.code.is_empty() {
+        return Err(anyhow::anyhow!("Authorization code not found"));
+    }
+
+    let mut updated_jar = jar
+        .remove(Cookie::from(oauth_csrf_cookie.name))
+        .remove(Cookie::from(oauth_pkce_cookie.name));
+
+    let token_result = match client
+        .exchange_code(query.code, pkce_verifier.unwrap())
         .await
     {
         Ok(response) => response,
-        Err(e) => {
-            return Err(e);
+        Err(_) => {
+            return Ok((
+                updated_jar,
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "/error".to_string(),
+            ));
         }
     };
 
-    let mut updated_jar = jar.clone();
-    updated_jar = updated_jar.remove(Cookie::from(csrf_cookie.name));
     updated_jar = updated_jar.add(new_cookie(
         access_token_cookie,
-        response.access_token().secret().to_string(),
+        token_result.access_token().secret().to_string(),
     ));
-    updated_jar = if response.refresh_token().is_some() {
+    updated_jar = if token_result.refresh_token().is_some() {
         updated_jar.add(new_cookie(
             refresh_token_cookie,
-            response.refresh_token().unwrap().secret().to_string(),
+            token_result.refresh_token().unwrap().secret().to_string(),
         ))
     } else {
         updated_jar.remove(Cookie::from(refresh_token_cookie.name))
     };
 
     let now = Utc::now();
-    let expires_in = response.expires_in().map(|duration| {
+    let expires_in = token_result.expires_in().map(|duration| {
         now.checked_add_signed(Duration::from_std(duration).unwrap())
             .unwrap()
     });

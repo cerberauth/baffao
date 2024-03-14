@@ -1,8 +1,14 @@
 [server]
 [server.cookies]
 
-[server.cookies.csrf]
-name = "oauth.csrf_token"
+[server.cookies.oauth_csrf]
+name = "oauth.csrf"
+secure = true
+http_only = true
+same_site = "Strict"
+
+[server.cookies.oauth_pkce]
+name = "oauth.pkce_verifier"
 secure = true
 http_only = true
 same_site = "Strict"
@@ -19,12 +25,6 @@ secure = true
 http_only = true
 same_site = "Strict"
 
-[server.cookies.id_token]
-name = "oauth.id_token"
-secure = true
-http_only = true
-same_site = "Strict"
-
 [server.cookies.session]
 name = "_session"
 secure = true
@@ -33,3 +33,4 @@ same_site = "Strict"
 
 [oauth]
 redirect_uri = "/"
+default_scopes = ["offline_access"]

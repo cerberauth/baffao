@@ -38,6 +38,9 @@
                     "kind": "bin"
                 }
             },
+            "env": {
+                "RUST_BACKTRACE": "full"
+            },
             "args": [],
             "cwd": "${workspaceFolder}/baffao-proxy"
         },
