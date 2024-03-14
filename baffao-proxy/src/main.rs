@@ -1,11 +1,11 @@
-// mod sessions;
 mod oauth;
+mod session;
 mod settings;
 
 use axum::{
     error_handling::HandleErrorLayer, extract::FromRef, http::StatusCode, routing::get, Router,
 };
-use baffao_core::oauth::client::OAuthClient;
+use baffao_core::oauth::OAuthClient;
 use std::time::Duration;
 use tokio::signal;
 use tower::{timeout::TimeoutLayer, BoxError, ServiceBuilder};
@@ -26,7 +26,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let oauth_client = OAuthClient::new(settings.oauth.clone());
+    let oauth_client = OAuthClient::new(settings.oauth.clone()).unwrap();
 
     let app_state = AppState {
         oauth_client,
@@ -34,9 +34,9 @@ async fn main() {
     };
 
     let app = Router::new()
-        // .route("/sessions", get(sessions::get_sessions))
         .route("/oauth/authorize", get(oauth::authorize))
         .route("/oauth/callback", get(oauth::callback))
+        .route("/session", get(session::get_session))
         .layer(
             ServiceBuilder::new()
                 .layer(HandleErrorLayer::new(|error: BoxError| async move {

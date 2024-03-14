@@ -1,16 +1,14 @@
-use std::time::Duration;
-
-use anyhow::Context;
+use anyhow::{Context, Error};
 use oauth2::{
-    basic::BasicClient, reqwest::async_http_client, AccessToken, AuthType, AuthUrl,
-    AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl, RefreshToken, Scope,
-    TokenResponse, TokenUrl,
+    basic::{BasicClient, BasicTokenType},
+    reqwest::async_http_client,
+    AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
+    RedirectUrl, Scope, StandardTokenResponse, TokenUrl,
 };
 use reqwest::Url;
 
-use crate::settings::OAuthConfig;
+use super::OAuthConfig;
 
-#[derive(Debug)]
 pub struct OAuthClient {
     config: OAuthConfig,
     client: BasicClient,
@@ -26,17 +24,21 @@ impl Clone for OAuthClient {
 }
 
 impl OAuthClient {
-    pub fn new(config: OAuthConfig) -> Self {
+    pub fn new(config: OAuthConfig) -> Result<Self, Error> {
+        let redirect_uri = RedirectUrl::new(config.authorization_redirect_uri.clone())?;
+        let auth_url = AuthUrl::new(config.authorization_url.clone())?;
+        let token_url = TokenUrl::new(config.token_url.clone())?;
+
         let client = BasicClient::new(
             ClientId::new(config.client_id.clone()),
             Some(ClientSecret::new(config.client_secret.clone())),
-            AuthUrl::new(config.authorization_url.clone()).unwrap(),
-            Some(TokenUrl::new(config.token_url.clone()).unwrap()),
+            auth_url,
+            Some(token_url),
         )
         .set_auth_type(AuthType::RequestBody)
-        .set_redirect_uri(RedirectUrl::new(config.authorization_redirect_uri.clone()).unwrap());
+        .set_redirect_uri(redirect_uri);
 
-        Self { config, client }
+        Ok(Self { config, client })
     }
 
     pub fn get_authorization_url(&self, scope: Vec<String>) -> (Url, CsrfToken) {
@@ -45,8 +47,7 @@ impl OAuthClient {
             request = request.add_scope(Scope::new(scope.join(" ")));
         }
 
-        let (auth_url, csrf_token) = request.url();
-        (auth_url, csrf_token)
+        return request.url();
     }
 
     pub async fn exchange_code(
@@ -54,7 +55,7 @@ impl OAuthClient {
         code: String,
         csrf_token: String,
         state: String,
-    ) -> Result<(AccessToken, Option<RefreshToken>, Option<Duration>), anyhow::Error> {
+    ) -> Result<StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>, Error> {
         if state != csrf_token {
             return Err(anyhow::anyhow!("Invalid state"));
         }
@@ -67,10 +68,6 @@ impl OAuthClient {
             .await
             .context("Failed to exchange code")?;
 
-        Ok((
-            token.access_token().clone(),
-            token.refresh_token().cloned(),
-            token.expires_in(),
-        ))
+        Ok(token)
     }
 }
