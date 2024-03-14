@@ -3,7 +3,7 @@ use oauth2::{
     basic::{BasicClient, BasicTokenType},
     reqwest::async_http_client,
     AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
-    RedirectUrl, Scope, StandardTokenResponse, TokenUrl,
+    PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, Scope, StandardTokenResponse, TokenUrl,
 };
 use reqwest::Url;
 
@@ -25,9 +25,12 @@ impl Clone for OAuthClient {
 
 impl OAuthClient {
     pub fn new(config: OAuthConfig) -> Result<Self, Error> {
-        let redirect_uri = RedirectUrl::new(config.authorization_redirect_uri.clone())?;
-        let auth_url = AuthUrl::new(config.authorization_url.clone())?;
-        let token_url = TokenUrl::new(config.token_url.clone())?;
+        let redirect_uri = RedirectUrl::new(config.authorization_redirect_uri.clone())
+            .context("Failed to parse redirect uri")?;
+        let auth_url = AuthUrl::new(config.authorization_url.clone())
+            .context("Failed to parse authorization url")?;
+        let token_url =
+            TokenUrl::new(config.token_url.clone()).context("Failed to parse token url")?;
 
         let client = BasicClient::new(
             ClientId::new(config.client_id.clone()),
@@ -41,33 +44,36 @@ impl OAuthClient {
         Ok(Self { config, client })
     }
 
-    pub fn get_authorization_url(&self, scope: Vec<String>) -> (Url, CsrfToken) {
-        let mut request = self.client.authorize_url(CsrfToken::new_random);
-        if !scope.is_empty() {
-            request = request.add_scope(Scope::new(scope.join(" ")));
-        }
+    pub fn build_authorization_url(
+        &self,
+        scope: Option<Vec<String>>,
+    ) -> (Url, CsrfToken, PkceCodeVerifier) {
+        let scopes =
+            scope.unwrap_or_else(|| self.config.default_scopes.clone().unwrap_or_default());
+        let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
 
-        return request.url();
+        let (url, csrf_token) = self
+            .client
+            .authorize_url(CsrfToken::new_random)
+            .add_scopes(scopes.iter().map(|s| Scope::new(s.clone())))
+            .set_pkce_challenge(pkce_code_challenge)
+            .url();
+
+        (url, csrf_token, pkce_code_verifier)
     }
 
     pub async fn exchange_code(
         &self,
         code: String,
-        csrf_token: String,
-        state: String,
+        pkce_verifier: String,
     ) -> Result<StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>, Error> {
-        if state != csrf_token {
-            return Err(anyhow::anyhow!("Invalid state"));
-        }
-
-        let code = AuthorizationCode::new(code);
-        let token = self
+        let token_result = self
             .client
-            .exchange_code(code)
+            .exchange_code(AuthorizationCode::new(code))
+            .set_pkce_verifier(PkceCodeVerifier::new(pkce_verifier))
             .request_async(async_http_client)
-            .await
-            .context("Failed to exchange code")?;
+            .await?;
 
-        Ok(token)
+        Ok(token_result)
     }
 }

@@ -7,7 +7,12 @@ base_url = "http://localhost:3000"
 
 [server.cookies]
 
-[server.cookies.csrf]
+[server.cookies.oauth_csrf]
+domain = ""
+secure = false
+same_site = "Lax"
+
+[server.cookies.oauth_pkce]
 domain = ""
 secure = false
 same_site = "Lax"
@@ -22,11 +27,6 @@ domain = ""
 secure = false
 same_site = "Lax"
 
-[server.cookies.id_token]
-domain = ""
-secure = false
-same_site = "Lax"
-
 [server.cookies.session]
 domain = ""
 secure = false
@@ -34,3 +34,4 @@ same_site = "Lax"
 
 [oauth]
 authorization_redirect_uri = "http://localhost:3000/oauth/callback"
+# default_scopes = ["openid", "email", "profile", "offline_access"]

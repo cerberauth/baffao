@@ -59,9 +59,9 @@ impl CookieConfig {
 
 #[derive(Deserialize, Clone)]
 pub struct CookiesConfig {
-    pub csrf: CookieConfig,
+    pub oauth_csrf: CookieConfig,
+    pub oauth_pkce: CookieConfig,
     pub access_token: CookieConfig,
     pub refresh_token: CookieConfig,
-    pub id_token: CookieConfig,
     pub session: CookieConfig,
 }

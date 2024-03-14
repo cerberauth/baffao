@@ -14,19 +14,25 @@ pub fn oauth2_authorize(
     query: Option<AuthorizationQuery>,
     client: OAuthClient,
     CookiesConfig {
-        csrf: csrf_cookie, ..
+        oauth_csrf: oauth_csrf_cookie,
+        oauth_pkce: oauth_pkce_cookie,
+        ..
     }: CookiesConfig,
 ) -> (CookieJar, StatusCode, String) {
-    let scopes = query
-        .map(|q| q.scope.unwrap_or_default())
-        .unwrap_or_default()
-        .split_whitespace()
-        .map(|s| s.to_string())
-        .collect();
-    let (url, csrf_token) = client.get_authorization_url(scopes);
+    let scope = query
+        .and_then(|q| q.scope)
+        .map(|scope| scope.split(' ').map(String::from).collect());
+    let (url, csrf_token, pkce_code_verifier) = client.build_authorization_url(scope);
 
     (
-        jar.add(new_cookie(csrf_cookie, csrf_token.secret().to_string())),
+        jar.add(new_cookie(
+            oauth_csrf_cookie,
+            csrf_token.secret().to_string(),
+        ))
+        .add(new_cookie(
+            oauth_pkce_cookie,
+            pkce_code_verifier.secret().to_string(),
+        )),
         StatusCode::TEMPORARY_REDIRECT,
         url.to_string(),
     )
