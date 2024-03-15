@@ -27,16 +27,16 @@ impl OAuthClient {
     pub fn new(config: OAuthConfig) -> Result<Self, Error> {
         let redirect_uri = RedirectUrl::new(config.authorization_redirect_uri.clone())
             .context("Failed to parse redirect uri")?;
-        let auth_url = AuthUrl::new(config.authorization_url.clone())
+        let auth_url = AuthUrl::new(config.authorization_endpoint.clone())
             .context("Failed to parse authorization url")?;
-        let token_url =
-            TokenUrl::new(config.token_url.clone()).context("Failed to parse token url")?;
+        let token_endpoint =
+            TokenUrl::new(config.token_endpoint.clone()).context("Failed to parse token url")?;
 
         let client = BasicClient::new(
             ClientId::new(config.client_id.clone()),
             Some(ClientSecret::new(config.client_secret.clone())),
             auth_url,
-            Some(token_url),
+            Some(token_endpoint),
         )
         .set_auth_type(AuthType::RequestBody)
         .set_redirect_uri(redirect_uri);
@@ -44,7 +44,7 @@ impl OAuthClient {
         Ok(Self { config, client })
     }
 
-    pub fn build_authorization_url(
+    pub fn build_authorization_endpoint(
         &self,
         scope: Option<Vec<String>>,
     ) -> (Url, CsrfToken, PkceCodeVerifier) {
@@ -67,13 +67,24 @@ impl OAuthClient {
         code: String,
         pkce_verifier: String,
     ) -> Result<StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>, Error> {
-        let token_result = self
+        let response = self
             .client
             .exchange_code(AuthorizationCode::new(code))
             .set_pkce_verifier(PkceCodeVerifier::new(pkce_verifier))
             .request_async(async_http_client)
-            .await?;
+            .await;
+        if let Err(e) = response {
+            if e.to_string().contains("invalid_grant") {
+                return Err(Error::msg("Invalid authorization code"));
+            } else if e.to_string().contains("invalid_request") {
+                return Err(Error::msg("Invalid PKCE verifier"));
+            } else if e.to_string().contains("invalid_client") {
+                return Err(Error::msg("Invalid client"));
+            }
 
-        Ok(token_result)
+            return Err(e.into());
+        }
+
+        Ok(response.unwrap())
     }
 }

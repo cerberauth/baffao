@@ -1,4 +1,6 @@
 [server]
+error_url = "/error"
+
 [server.cookies]
 
 [server.cookies.oauth_csrf]
