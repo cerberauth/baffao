@@ -17,12 +17,7 @@ pub async fn authorize(
     State(client): State<OAuthClient>,
     State(settings): State<Settings>,
 ) -> impl IntoResponse {
-    let (updated_jar, _, url) = oauth2_authorize(
-        jar,
-        query.map(|q| q.0),
-        client,
-        settings.server.cookies.clone(),
-    );
+    let (updated_jar, _, url) = oauth2_authorize(client, settings.server, jar, query.map(|q| q.0));
 
     (updated_jar, Redirect::temporary(&url.to_string()))
 }
@@ -33,10 +28,7 @@ pub async fn callback(
     State(client): State<OAuthClient>,
     State(settings): State<Settings>,
 ) -> impl IntoResponse {
-    let (updated_jar, _, url) =
-        oauth2_callback(jar, query, client, settings.server.cookies.clone())
-            .await
-            .unwrap();
+    let (updated_jar, _, url) = oauth2_callback(client, settings.server, jar, query).await;
 
     (updated_jar, Redirect::temporary(&url.to_string()))
 }

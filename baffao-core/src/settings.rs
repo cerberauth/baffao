@@ -7,6 +7,7 @@ pub struct ServerConfig {
     pub port: u16,
     pub base_url: String,
     pub cookies: CookiesConfig,
+    pub error_url: String,
 }
 
 #[derive(Deserialize, Clone)]

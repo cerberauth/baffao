@@ -1,4 +1,3 @@
-use anyhow::Error;
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use chrono::{Duration, Utc};
 use oauth2::TokenResponse;
@@ -7,9 +6,10 @@ use serde::Deserialize;
 
 use crate::{
     cookies::new_cookie,
+    error::build_error_redirect_url,
     oauth::OAuthClient,
     session::{update_session, Session},
-    settings::CookiesConfig,
+    settings::{CookiesConfig, ServerConfig},
 };
 
 #[derive(Deserialize)]
@@ -19,36 +19,59 @@ pub struct AuthorizationCallbackQuery {
 }
 
 pub async fn oauth2_callback(
+    client: OAuthClient,
+    config: ServerConfig,
     jar: CookieJar,
     query: AuthorizationCallbackQuery,
-    client: OAuthClient,
-    CookiesConfig {
-        oauth_csrf: oauth_csrf_cookie,
-        oauth_pkce: oauth_pkce_cookie,
-        access_token: access_token_cookie,
-        refresh_token: refresh_token_cookie,
-        session: session_cookie,
+) -> (CookieJar, StatusCode, String) {
+    let ServerConfig {
+        error_url,
+        cookies:
+            CookiesConfig {
+                oauth_csrf: oauth_csrf_cookie,
+                oauth_pkce: oauth_pkce_cookie,
+                access_token: access_token_cookie,
+                refresh_token: refresh_token_cookie,
+                session: session_cookie,
+                ..
+            },
         ..
-    }: CookiesConfig,
-) -> Result<(CookieJar, StatusCode, String), Error> {
+    } = config;
+
     let pkce_code = jar
         .get(oauth_csrf_cookie.name.as_str())
         .map(|cookie| cookie.value().to_string());
     if pkce_code.is_none() {
-        return Err(anyhow::anyhow!("CSRF token not found"));
+        return (
+            jar,
+            StatusCode::TEMPORARY_REDIRECT,
+            build_error_redirect_url(&error_url, "CSRF token not found"),
+        );
     } else if pkce_code.unwrap() != query.state {
-        return Err(anyhow::anyhow!("CSRF token mismatch"));
+        return (
+            jar,
+            StatusCode::TEMPORARY_REDIRECT,
+            build_error_redirect_url(&error_url, "CSRF token mismatch"),
+        );
     }
 
     let pkce_verifier = jar
         .get(oauth_pkce_cookie.name.as_str())
         .map(|cookie| cookie.value().to_string());
     if pkce_verifier.is_none() {
-        return Err(anyhow::anyhow!("PKCE verifier not found"));
+        return (
+            jar,
+            StatusCode::TEMPORARY_REDIRECT,
+            build_error_redirect_url(&error_url, "PKCE verifier not found"),
+        );
     }
 
     if query.code.is_empty() {
-        return Err(anyhow::anyhow!("Authorization code not found"));
+        return (
+            jar,
+            StatusCode::TEMPORARY_REDIRECT,
+            build_error_redirect_url(&error_url, "Authorization code not found"),
+        );
     }
 
     let mut updated_jar = jar
@@ -60,12 +83,12 @@ pub async fn oauth2_callback(
         .await
     {
         Ok(response) => response,
-        Err(_) => {
-            return Ok((
+        Err(e) => {
+            return (
                 updated_jar,
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "/error".to_string(),
-            ));
+                StatusCode::TEMPORARY_REDIRECT,
+                build_error_redirect_url(&error_url, &e.to_string()),
+            );
         }
     };
 
@@ -90,5 +113,5 @@ pub async fn oauth2_callback(
     let session = Session::new(None, Some(now), expires_in);
     updated_jar = update_session(updated_jar, session_cookie, Some(session));
 
-    Ok((updated_jar, StatusCode::TEMPORARY_REDIRECT, "/".to_string()))
+    (updated_jar, StatusCode::TEMPORARY_REDIRECT, "/".to_string())
 }

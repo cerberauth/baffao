@@ -1,0 +1,10 @@
+# This file is not used in the application, it is just a template for the configuration file.
+# Copy this file to `local.toml` and fill in the values.
+
+[oauth]
+client_id = "client_id"
+client_secret = "client_secret"
+authorization_redirect_uri = "http://127.0.0.1:3000/oauth/callback"
+authorization_endpoint = "http://127.0.0.1:4444/oauth2/auth"
+token_endpoint = "http://127.0.0.1/oauth2/token"
+redirect_uri = "http://127.0.0.1:3000/"

@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  hydra:
+    image: oryd/hydra:v2.2
+    command: serve all -c /etc/config/hydra/hydra.yml --dev
+    volumes:
+      - ./hydra.yml:/etc/config/hydra/hydra.yml:ro
+      - hydra-sqlite:/var/lib/sqlite
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+    restart: unless-stopped
+    ports:
+      - 4444:4444
+      - 4445:4445
+      - 5555:5555
+    depends_on:
+      - hydra-migrate
+
+  hydra-migrate:
+    image: oryd/hydra:v2.2
+    volumes:
+      - ./hydra.yml:/etc/config/hydra/hydra.yml:ro
+      - hydra-sqlite:/var/lib/sqlite
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+    command: migrate -c /etc/config/hydra/hydra.yml sql -e --yes
+    restart: on-failure
+
+  hydra-login-consent:
+    image: cerberauth/hydra-login-consent
+    environment:
+      - HYDRA_ADMIN_URL=http://hydra:4445
+      - HYDRA_PUBLIC_URL=http://hydra:4444
+      - PORT=8080
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    depends_on:
+      - hydra
+
+volumes:
+  hydra-sqlite:

@@ -3,7 +3,8 @@ debug = true
 [server]
 host = "127.0.0.1"
 port = 3000
-base_url = "http://localhost:3000"
+base_url = "http://127.0.0.1:3000"
+error_url = "http://127.0.0.1:3000/error"
 
 [server.cookies]
 
@@ -31,7 +32,3 @@ same_site = "Lax"
 domain = ""
 secure = false
 same_site = "Lax"
-
-[oauth]
-authorization_redirect_uri = "http://localhost:3000/oauth/callback"
-# default_scopes = ["openid", "email", "profile", "offline_access"]
