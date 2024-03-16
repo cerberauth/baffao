@@ -8,10 +8,17 @@ use baffao_core::{
 };
 
 #[derive(Deserialize, Clone)]
+pub struct ProxyConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+#[derive(Deserialize, Clone)]
 pub struct Settings {
     pub server: ServerConfig,
     pub oauth: OAuthConfig,
     pub jwt: Option<JwtConfig>,
+    pub proxy: ProxyConfig,
     pub debug: bool,
 }
 

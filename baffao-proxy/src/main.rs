@@ -1,11 +1,12 @@
 mod oauth;
+mod proxy;
 mod session;
 mod settings;
+mod state;
 
-use axum::{
-    error_handling::HandleErrorLayer, extract::FromRef, http::StatusCode, routing::get, Router,
-};
-use baffao_core::oauth::OAuthClient;
+use axum::{error_handling::HandleErrorLayer, http::StatusCode, routing::{any, get}, Router};
+use baffao_core::oauth::OAuthHttpHandler;
+use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use std::time::Duration;
 use tokio::signal;
 use tower::{timeout::TimeoutLayer, BoxError, ServiceBuilder};
@@ -21,15 +22,21 @@ async fn main() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "baffao=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "baffao=trace,tower_http=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let oauth_client = OAuthClient::new(settings.oauth.clone()).unwrap();
-
-    let app_state = AppState {
-        oauth_client,
+    let client: state::HttpClient =
+        hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
+            .build(HttpConnector::new());
+    let oauth_http_handler = OAuthHttpHandler::new(
+        settings.oauth.clone(),
+        settings.server.cookies.clone(),
+    ).unwrap();
+    let app_state = state::AppState {
+        client,
+        oauth_http_handler,
         settings: settings.clone(),
     };
 
@@ -37,6 +44,7 @@ async fn main() {
         .route("/oauth/authorize", get(oauth::authorize))
         .route("/oauth/callback", get(oauth::callback))
         .route("/session", get(session::get_session))
+        .fallback(any(proxy::handler))
         .layer(
             ServiceBuilder::new()
                 .layer(HandleErrorLayer::new(|error: BoxError| async move {
@@ -90,23 +98,5 @@ async fn shutdown_signal() {
     tokio::select! {
         _ = ctrl_c => {},
         _ = terminate => {},
-    }
-}
-
-#[derive(Clone)]
-struct AppState {
-    oauth_client: OAuthClient,
-    settings: Settings,
-}
-
-impl FromRef<AppState> for OAuthClient {
-    fn from_ref(state: &AppState) -> Self {
-        state.oauth_client.clone()
-    }
-}
-
-impl FromRef<AppState> for Settings {
-    fn from_ref(state: &AppState) -> Self {
-        state.settings.clone()
     }
 }

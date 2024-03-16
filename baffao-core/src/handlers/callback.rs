@@ -1,14 +1,10 @@
 use axum_extra::extract::cookie::{Cookie, CookieJar};
-use chrono::{Duration, Utc};
-use oauth2::TokenResponse;
 use reqwest::StatusCode;
 use serde::Deserialize;
 
 use crate::{
-    cookies::new_cookie,
     error::build_error_redirect_url,
-    oauth::OAuthClient,
-    session::{update_session, Session},
+    oauth::OAuthHttpHandler,
     settings::{CookiesConfig, ServerConfig},
 };
 
@@ -19,7 +15,7 @@ pub struct AuthorizationCallbackQuery {
 }
 
 pub async fn oauth2_callback(
-    client: OAuthClient,
+    handler: OAuthHttpHandler,
     config: ServerConfig,
     jar: CookieJar,
     query: AuthorizationCallbackQuery,
@@ -30,9 +26,6 @@ pub async fn oauth2_callback(
             CookiesConfig {
                 oauth_csrf: oauth_csrf_cookie,
                 oauth_pkce: oauth_pkce_cookie,
-                access_token: access_token_cookie,
-                refresh_token: refresh_token_cookie,
-                session: session_cookie,
                 ..
             },
         ..
@@ -78,8 +71,8 @@ pub async fn oauth2_callback(
         .remove(Cookie::from(oauth_csrf_cookie.name))
         .remove(Cookie::from(oauth_pkce_cookie.name));
 
-    let token_result = match client
-        .exchange_code(query.code, pkce_verifier.unwrap())
+    updated_jar = match handler
+        .exchange_code(updated_jar.to_owned(), query.code, pkce_verifier.unwrap())
         .await
     {
         Ok(response) => response,
@@ -91,27 +84,6 @@ pub async fn oauth2_callback(
             );
         }
     };
-
-    updated_jar = updated_jar.add(new_cookie(
-        access_token_cookie,
-        token_result.access_token().secret().to_string(),
-    ));
-    updated_jar = if token_result.refresh_token().is_some() {
-        updated_jar.add(new_cookie(
-            refresh_token_cookie,
-            token_result.refresh_token().unwrap().secret().to_string(),
-        ))
-    } else {
-        updated_jar.remove(Cookie::from(refresh_token_cookie.name))
-    };
-
-    let now = Utc::now();
-    let expires_in = token_result.expires_in().map(|duration| {
-        now.checked_add_signed(Duration::from_std(duration).unwrap())
-            .unwrap()
-    });
-    let session = Session::new(None, Some(now), expires_in);
-    updated_jar = update_session(updated_jar, session_cookie, Some(session));
 
     (updated_jar, StatusCode::TEMPORARY_REDIRECT, "/".to_string())
 }
