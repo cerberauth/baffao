@@ -115,7 +115,11 @@ impl OAuthHttpHandler {
                 .unwrap()
         });
         let session = Session::new(None, Some(now), expires_in);
-        updated_jar = update_session(updated_jar, self.cookies_config.session.to_owned(), Some(session));
+        updated_jar = update_session(
+            updated_jar,
+            self.cookies_config.session.to_owned(),
+            Some(session),
+        );
 
         Ok(updated_jar)
     }

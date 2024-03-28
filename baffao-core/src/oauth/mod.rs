@@ -4,11 +4,7 @@ pub use http::OAuthHttpHandler;
 mod client;
 mod http;
 
-use oauth2::{
-    basic::BasicTokenType,
-    EmptyExtraTokenFields,
-    StandardTokenResponse,
-};
+use oauth2::{basic::BasicTokenType, EmptyExtraTokenFields, StandardTokenResponse};
 
 use serde::Deserialize;
 

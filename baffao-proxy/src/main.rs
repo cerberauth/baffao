@@ -4,7 +4,12 @@ mod session;
 mod settings;
 mod state;
 
-use axum::{error_handling::HandleErrorLayer, http::StatusCode, routing::{any, get}, Router};
+use axum::{
+    error_handling::HandleErrorLayer,
+    http::StatusCode,
+    routing::{any, get},
+    Router,
+};
 use baffao_core::oauth::OAuthHttpHandler;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use std::time::Duration;
@@ -30,10 +35,8 @@ async fn main() {
     let client: state::HttpClient =
         hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
             .build(HttpConnector::new());
-    let oauth_http_handler = OAuthHttpHandler::new(
-        settings.oauth.clone(),
-        settings.server.cookies.clone(),
-    ).unwrap();
+    let oauth_http_handler =
+        OAuthHttpHandler::new(settings.oauth.clone(), settings.server.cookies.clone()).unwrap();
     let app_state = state::AppState {
         client,
         oauth_http_handler,
