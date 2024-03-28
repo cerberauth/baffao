@@ -1,13 +1,12 @@
 use anyhow::{Context, Error};
 use oauth2::{
-    basic::{BasicClient, BasicTokenType},
-    reqwest::async_http_client,
-    AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
-    PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, Scope, StandardTokenResponse, TokenUrl,
+    basic::BasicClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode, ClientId,
+    ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, RefreshToken, Scope,
+    TokenUrl,
 };
 use reqwest::Url;
 
-use super::OAuthConfig;
+use super::{AccessToken, OAuthConfig};
 
 pub struct OAuthClient {
     config: OAuthConfig,
@@ -66,7 +65,7 @@ impl OAuthClient {
         &self,
         code: String,
         pkce_verifier: String,
-    ) -> Result<StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>, Error> {
+    ) -> Result<AccessToken, Error> {
         let response = self
             .client
             .exchange_code(AuthorizationCode::new(code))
@@ -78,6 +77,25 @@ impl OAuthClient {
                 return Err(Error::msg("Invalid authorization code"));
             } else if e.to_string().contains("invalid_request") {
                 return Err(Error::msg("Invalid PKCE verifier"));
+            } else if e.to_string().contains("invalid_client") {
+                return Err(Error::msg("Invalid client"));
+            }
+
+            return Err(e.into());
+        }
+
+        Ok(response.unwrap())
+    }
+
+    pub async fn refresh_token(&self, refresh_token: String) -> Result<AccessToken, Error> {
+        let response = self
+            .client
+            .exchange_refresh_token(&RefreshToken::new(refresh_token))
+            .request_async(async_http_client)
+            .await;
+        if let Err(e) = response {
+            if e.to_string().contains("invalid_grant") {
+                return Err(Error::msg("Invalid refresh token"));
             } else if e.to_string().contains("invalid_client") {
                 return Err(Error::msg("Invalid client"));
             }
