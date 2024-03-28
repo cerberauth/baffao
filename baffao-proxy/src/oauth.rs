@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Redirect},
 };
 use axum_extra::extract::CookieJar;
-use baffao_core::{
+use baffao::{
     handlers::{oauth2_authorize, oauth2_callback, AuthorizationCallbackQuery, AuthorizationQuery},
     oauth::OAuthHttpHandler,
 };
