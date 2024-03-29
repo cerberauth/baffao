@@ -2,7 +2,7 @@ use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
 use std::env;
 
-use baffao_core::{
+use baffao::{
     oauth::OAuthConfig,
     settings::{JwtConfig, ServerConfig},
 };

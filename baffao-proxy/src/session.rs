@@ -1,6 +1,6 @@
 use axum::{extract::State, response::IntoResponse, Json};
 use axum_extra::extract::cookie::CookieJar;
-use baffao_core::{handlers::get_session_from_cookie, session::Session};
+use baffao::{handlers::get_session_from_cookie, session::Session};
 use serde::Serialize;
 
 use crate::settings::Settings;

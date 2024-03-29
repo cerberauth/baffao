@@ -4,7 +4,7 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::extract::CookieJar;
-use baffao_core::{handlers::proxy, oauth::OAuthHttpHandler};
+use baffao::{handlers::proxy, oauth::OAuthHttpHandler};
 
 use crate::settings::Settings;
 use crate::state::HttpClient;

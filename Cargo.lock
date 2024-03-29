@@ -158,8 +158,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "baffao-core"
-version = "0.1.0"
+name = "baffao"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "axum-extra",
@@ -179,11 +179,11 @@ dependencies = [
 
 [[package]]
 name = "baffao-proxy"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "axum",
  "axum-extra",
- "baffao-core",
+ "baffao",
  "config",
  "hyper 1.2.0",
  "hyper-util",

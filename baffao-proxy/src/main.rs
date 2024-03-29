@@ -10,7 +10,7 @@ use axum::{
     routing::{any, get},
     Router,
 };
-use baffao_core::oauth::OAuthHttpHandler;
+use baffao::oauth::OAuthHttpHandler;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use std::time::Duration;
 use tokio::signal;

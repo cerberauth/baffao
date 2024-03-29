@@ -1,5 +1,5 @@
 use axum::{body::Body, extract::FromRef};
-use baffao_core::oauth::OAuthHttpHandler;
+use baffao::oauth::OAuthHttpHandler;
 use hyper_util::client::legacy::connect::HttpConnector;
 
 use crate::settings::Settings;

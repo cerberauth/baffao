@@ -7,16 +7,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'baffao-core'",
+            "name": "Debug unit tests in library 'baffao'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=baffao-core"
+                    "--package=baffao"
                 ],
                 "filter": {
-                    "name": "baffao-core",
+                    "name": "baffao",
                     "kind": "lib"
                 }
             },
