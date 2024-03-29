@@ -7,13 +7,13 @@ error_url = "/error"
 name = "oauth.csrf"
 secure = true
 http_only = true
-same_site = "Strict"
+same_site = "Lax"
 
 [server.cookies.oauth_pkce]
 name = "oauth.pkce_verifier"
 secure = true
 http_only = true
-same_site = "Strict"
+same_site = "Lax"
 
 [server.cookies.access_token]
 name = "oauth.access_token"

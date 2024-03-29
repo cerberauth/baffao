@@ -21,14 +21,14 @@ same_site = "Lax"
 [server.cookies.access_token]
 domain = ""
 secure = false
-same_site = "Lax"
+same_site = "Strict"
 
 [server.cookies.refresh_token]
 domain = ""
 secure = false
-same_site = "Lax"
+same_site = "Strict"
 
 [server.cookies.session]
 domain = ""
 secure = false
-same_site = "Lax"
+same_site = "Strict"
