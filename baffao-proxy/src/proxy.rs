@@ -16,6 +16,11 @@ pub async fn handler(
     State(settings): State<Settings>,
     mut req: Request,
 ) -> impl IntoResponse {
+    if settings.proxy.is_none() {
+        return (jar, StatusCode::BAD_GATEWAY.into_response());
+    }
+    let proxy_settings = settings.proxy.as_ref().unwrap();
+
     let path = req.uri().path();
     let path_query = req
         .uri()
@@ -24,7 +29,7 @@ pub async fn handler(
         .unwrap_or(path);
     let uri = format!(
         "http://{}:{}{}",
-        settings.proxy.host, settings.proxy.port, path_query
+        proxy_settings.host, proxy_settings.port, path_query
     );
 
     let (updated_jar, headers) = proxy(handler, jar)

@@ -18,7 +18,7 @@ pub struct Settings {
     pub server: ServerConfig,
     pub oauth: OAuthConfig,
     pub jwt: Option<JwtConfig>,
-    pub proxy: ProxyConfig,
+    pub proxy: Option<ProxyConfig>,
     pub debug: bool,
 }
 
@@ -30,10 +30,14 @@ impl Settings {
             .add_source(File::with_name("config/default"))
             .add_source(File::with_name(&format!("config/{}", run_mode)).required(false))
             .add_source(File::with_name("config/local").required(false))
-            .add_source(Environment::with_prefix("baffao"))
+            .add_source(Environment::with_prefix("BAFFAO").separator("__"))
             .build()?;
 
-        println!("debug: {:?}", s.get_bool("debug"));
+        let debug = s.get_bool("debug").unwrap_or(false);
+        println!("debug: {:?}", debug);
+        if debug {
+            println!("{:?}", s);
+        }
 
         s.try_deserialize()
     }
