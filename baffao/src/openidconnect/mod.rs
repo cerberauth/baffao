@@ -4,7 +4,7 @@ pub use http::OAuthHttpHandler;
 mod client;
 mod http;
 
-use oauth2::{basic::BasicTokenType, EmptyExtraTokenFields, StandardTokenResponse};
+use openidconnect::{basic::BasicTokenType, EmptyExtraTokenFields, StandardTokenResponse};
 
 use serde::Deserialize;
 
@@ -19,10 +19,13 @@ use serde::Deserialize;
 pub struct OAuthConfig {
     pub client_id: String,
     pub client_secret: String,
+    pub issuer: String,
     pub authorization_redirect_uri: String,
     pub authorization_endpoint: String,
     pub token_endpoint: String,
+    pub userinfo_endpoint: Option<String>,
     pub redirect_uri: Option<String>,
+    pub jwks_uri: Option<String>,
     pub default_scopes: Option<Vec<String>>,
 }
 

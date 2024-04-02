@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::env;
 
 use baffao::{
-    oauth::OAuthConfig,
+    openidconnect::OAuthConfig,
     settings::{JwtConfig, ServerConfig},
 };
 
