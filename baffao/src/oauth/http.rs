@@ -94,20 +94,19 @@ impl OAuthHttpHandler {
     ) -> Result<CookieJar, Error> {
         let token_result = self.client.exchange_code(code, pkce_verifier).await?;
         let token = token_result.access_token();
-        let refresh_token = token_result.refresh_token().unwrap();
 
         let mut updated_jar = jar.add(new_cookie(
             self.cookies_config.access_token.to_owned(),
             token.secret().to_string(),
         ));
-        updated_jar = if token_result.refresh_token().is_some() {
-            updated_jar.add(new_cookie(
+        if token_result.refresh_token().is_some() {
+            updated_jar = updated_jar.add(new_cookie(
                 self.cookies_config.refresh_token.to_owned(),
-                refresh_token.secret().to_string(),
-            ))
+                token_result.refresh_token().unwrap().secret().to_string(),
+            ));
         } else {
-            updated_jar.remove(self.cookies_config.refresh_token.to_owned().name)
-        };
+            updated_jar = updated_jar.remove(self.cookies_config.refresh_token.to_owned().name);
+        }
 
         let now = Utc::now();
         let expires_in = token_result.expires_in().map(|duration| {
