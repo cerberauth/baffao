@@ -2,7 +2,7 @@ use anyhow::{Error, Ok};
 use axum_extra::extract::CookieJar;
 use http::HeaderMap;
 
-use crate::oauth::OAuthHttpHandler;
+use crate::openidconnect::OAuthHttpHandler;
 
 pub async fn proxy(
     handler: OAuthHttpHandler,

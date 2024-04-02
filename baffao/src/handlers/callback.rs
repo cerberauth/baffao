@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::{
     error::build_error_redirect_url,
-    oauth::OAuthHttpHandler,
+    openidconnect::OAuthHttpHandler,
     settings::{CookiesConfig, ServerConfig},
 };
 

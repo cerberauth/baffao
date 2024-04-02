@@ -2,7 +2,7 @@ use axum_extra::extract::CookieJar;
 use reqwest::StatusCode;
 use serde::Deserialize;
 
-use crate::oauth::OAuthHttpHandler;
+use crate::openidconnect::OAuthHttpHandler;
 
 #[derive(Deserialize)]
 pub struct AuthorizationQuery {

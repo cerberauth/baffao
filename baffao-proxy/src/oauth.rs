@@ -7,7 +7,7 @@ use axum::{
 use axum_extra::extract::CookieJar;
 use baffao::{
     handlers::{oauth2_authorize, oauth2_callback, AuthorizationCallbackQuery, AuthorizationQuery},
-    oauth::OAuthHttpHandler,
+    openidconnect::OAuthHttpHandler,
 };
 
 // TODO: use signed cookies

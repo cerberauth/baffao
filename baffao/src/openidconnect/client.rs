@@ -1,44 +1,69 @@
-use anyhow::{Context, Error};
-use oauth2::{
-    basic::BasicClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, RefreshToken, Scope,
-    TokenUrl,
+use anyhow::Error;
+use openidconnect::{
+    core::CoreClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl, JsonWebKeySet, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, RefreshToken, Scope, TokenUrl, UserInfoUrl
 };
 use reqwest::Url;
 
 use super::{AccessToken, OAuthConfig};
 
-pub struct OAuthClient {
+pub struct OpenIDConnectClient {
     config: OAuthConfig,
-    client: BasicClient,
+    client: CoreClient,
 }
 
-impl Clone for OAuthClient {
+impl Clone for OpenIDConnectClient {
     fn clone(&self) -> Self {
-        OAuthClient {
+        OpenIDConnectClient {
             config: self.config.clone(),
             client: self.client.clone(),
         }
     }
 }
 
-impl OAuthClient {
+impl OpenIDConnectClient {
     pub fn new(config: OAuthConfig) -> Result<Self, Error> {
-        let redirect_uri = RedirectUrl::new(config.authorization_redirect_uri.clone())
-            .context("Failed to parse redirect uri")?;
-        let auth_url = AuthUrl::new(config.authorization_endpoint.clone())
-            .context("Failed to parse authorization url")?;
+        let redirect_uri = RedirectUrl::new(config.authorization_redirect_uri)?;
+        let auth_url = AuthUrl::new(config.authorization_endpoint)?;
+        let issuer = IssuerUrl::new(config.issuer)?;
         let token_endpoint =
-            TokenUrl::new(config.token_endpoint.clone()).context("Failed to parse token url")?;
+            TokenUrl::new(config.token_endpoint)?;
+        let user_info_endpoint = if config.userinfo_endpoint.is_some() {
+            Some(UserInfoUrl::new(config.userinfo_endpoint.unwrap())?)
+        } else {
+            None
+        };
+        if (config.jwks_uri.is_some() && config.jwks_uri.as_ref().unwrap().is_empty())
+            || (config.default_scopes.is_some() && config.default_scopes.as_ref().unwrap().is_empty())
+        {
+            return Err(Error::msg("Invalid configuration"));
+        }
+        let jwks = if config.jwks_uri.is_some() {
+            Some(JsonWebKeySet::fetch(config.jwks_uri.unwrap())?)
+        } else {
+            None
+        };
 
-        let client = BasicClient::new(
+        let client = CoreClient::new(
             ClientId::new(config.client_id.clone()),
-            Some(ClientSecret::new(config.client_secret.clone())),
+            Some(ClientSecret::new(config.client_secret)),
+            issuer,
             auth_url,
             Some(token_endpoint),
+            user_info_endpoint,
+            jwks,
         )
         .set_auth_type(AuthType::RequestBody)
         .set_redirect_uri(redirect_uri);
+
+        Ok(Self { config, client })
+    }
+
+    pub fn from_provider_metadata(&self) -> Result<Self, Error> {
+        CoreClient::from_provider_metadata(
+            provider_metadata,
+            ClientId::new(config.client_id.clone()),
+            Some(ClientSecret::new(config.client_secret)),
+        );
 
         Ok(Self { config, client })
     }

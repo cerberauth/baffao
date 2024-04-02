@@ -1,20 +1,19 @@
 use anyhow::{Error, Ok};
 use axum_extra::extract::CookieJar;
 use chrono::{Duration, Utc};
-use oauth2::TokenResponse;
 
 use super::OAuthConfig;
 use crate::cookies::new_cookie;
 use crate::session::{update_session, Session};
-use crate::{oauth::OAuthClient, settings::CookiesConfig};
+use crate::{openidconnect::OAuthClient, settings::CookiesConfig};
 
 #[derive(Clone)]
-pub struct OAuthHttpHandler {
+pub struct OpenIDConnectHttpHandler {
     client: OAuthClient,
     cookies_config: CookiesConfig,
 }
 
-impl OAuthHttpHandler {
+impl OpenIDConnectHttpHandler {
     pub fn new(oauth_config: OAuthConfig, cookies_config: CookiesConfig) -> Result<Self, Error> {
         let client = OAuthClient::new(oauth_config)?;
 
@@ -106,6 +105,15 @@ impl OAuthHttpHandler {
             ));
         } else {
             updated_jar = updated_jar.remove(self.cookies_config.refresh_token.to_owned().name);
+        }
+
+        if token_result.id_token().is_some() {
+            updated_jar = updated_jar.add(new_cookie(
+                self.cookies_config.id_token.to_owned(),
+                token_result.id_token().unwrap().secret().to_string(),
+            ));
+        } else {
+            updated_jar = updated_jar.remove(self.cookies_config.id_token.to_owned().name);
         }
 
         let now = Utc::now();
