@@ -1,3 +1,5 @@
 {
-  "extends": ["github>emmanuelgautier/renovate-config"]
+    "extends": [
+        "github>cerberauth/renovate-config"
+    ]
 }
