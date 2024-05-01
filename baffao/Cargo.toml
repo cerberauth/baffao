@@ -14,7 +14,7 @@ readme = "../README.md"
 [dependencies]
 anyhow = "1.0.82"
 axum-extra = { version = "0.9.3", features = ["cookie"] }
-base64 = "0.22.0"
+base64 = "0.22.1"
 chrono = "0.4.38"
 config = "0.14.0"
 cookie = "0.18.1"
