@@ -1,0 +1,20 @@
+meta {
+  name: Authorize
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/oauth/authorize
+}
+
+assert {
+  res.status: eq 307
+  res.body: isEmpty
+  res.headers.location: isDefined
+  res.headers.location: eq {{authServerUrl}}/oauth/authorize
+}
+
+script:pre-request {
+  req.setMaxRedirects(0);
+}

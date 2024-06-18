@@ -1,0 +1,20 @@
+meta {
+  name: Authorize Callback
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/oauth/callback
+}
+
+assert {
+  res.status: eq 301
+  res.body: isEmpty
+  res.headers.location: isDefined
+  res.headers.location: eq /
+}
+
+script:pre-request {
+  req.setMaxRedirects(0);
+}

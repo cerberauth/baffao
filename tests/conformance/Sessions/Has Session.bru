@@ -1,0 +1,16 @@
+meta {
+  name: Has Session
+  type: http
+  seq: 1
+}
+
+head {
+  url: {{host}}/sessions
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+  res.body: isEmpty
+}

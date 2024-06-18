@@ -1,0 +1,17 @@
+meta {
+  name: Get Sessions
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/sessions
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body: isJson
+  res.body.sessions: length 0
+}
