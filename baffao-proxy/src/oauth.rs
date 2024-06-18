@@ -31,3 +31,10 @@ pub async fn callback(
 
     (updated_jar, Redirect::temporary(&url.to_string()))
 }
+
+pub async fn introspect(
+    jar: CookieJar,
+    State(handler): State<OAuthHttpHandler>,
+) -> impl IntoResponse {
+    handler.introspect(jar).await;
+}

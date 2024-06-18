@@ -46,6 +46,7 @@ async fn main() {
     let app = Router::new()
         .route("/oauth/authorize", get(oauth::authorize))
         .route("/oauth/callback", get(oauth::callback))
+        .route("/oauth/introspect", get(oauth::introspect))
         .route("/session", get(session::get_session))
         .fallback(any(proxy::handler))
         .layer(

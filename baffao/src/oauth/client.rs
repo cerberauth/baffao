@@ -1,12 +1,10 @@
 use anyhow::{Context, Error};
 use oauth2::{
-    basic::BasicClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, RefreshToken, Scope,
-    TokenUrl,
+    basic::BasicClient, reqwest::async_http_client, AccessToken as OAuthAccessToken, AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IntrospectionUrl, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, RefreshToken, Scope, TokenUrl
 };
 use reqwest::Url;
 
-use super::{AccessToken, OAuthConfig};
+use super::{AccessToken, IntrospectionTokenResponse, OAuthConfig};
 
 pub struct OAuthClient {
     config: OAuthConfig,
@@ -31,7 +29,7 @@ impl OAuthClient {
         let token_endpoint =
             TokenUrl::new(config.token_endpoint.clone()).context("Failed to parse token url")?;
 
-        let client = BasicClient::new(
+        let mut client = BasicClient::new(
             ClientId::new(config.client_id.clone()),
             Some(ClientSecret::new(config.client_secret.clone())),
             auth_url,
@@ -39,6 +37,12 @@ impl OAuthClient {
         )
         .set_auth_type(AuthType::RequestBody)
         .set_redirect_uri(redirect_uri);
+
+        if let Some(introspection_endpoint) = &config.introspection_endpoint {
+            let introspection_endpoint = IntrospectionUrl::new(introspection_endpoint.clone())
+                .context("Failed to parse introspection url")?;
+            client = client.set_introspection_uri(introspection_endpoint);
+        }
 
         Ok(Self { config, client })
     }
@@ -104,5 +108,19 @@ impl OAuthClient {
         }
 
         Ok(response.unwrap())
+    }
+
+    pub async fn introspect_token(
+        &self,
+        token: String,
+    ) -> Result<IntrospectionTokenResponse, Error>
+    {
+        let response = self
+            .client
+            .introspect(&OAuthAccessToken::new(token))?
+            .request_async(async_http_client)
+            .await?;
+
+        Ok(response)
     }
 }

@@ -3,7 +3,7 @@ use axum_extra::extract::CookieJar;
 use chrono::{Duration, Utc};
 use oauth2::TokenResponse;
 
-use super::OAuthConfig;
+use super::{IntrospectionTokenResponse, OAuthConfig};
 use crate::cookies::new_cookie;
 use crate::session::{update_session, Session};
 use crate::{oauth::OAuthClient, settings::CookiesConfig};
@@ -128,5 +128,15 @@ impl OAuthHttpHandler {
             client: self.client.clone(),
             cookies_config: self.cookies_config.clone(),
         }
+    }
+
+    pub async fn introspect(&self, jar: CookieJar) -> (CookieJar, Option<IntrospectionTokenResponse>) {
+        let (updated_jar, access_token) = self.get_or_refresh_token(jar).await.unwrap();
+        if access_token.is_none() {
+            return (updated_jar, None)
+        }
+
+        let result = self.client.introspect_token(access_token.unwrap().to_string()).await.unwrap();
+        (updated_jar, Some(result))
     }
 }

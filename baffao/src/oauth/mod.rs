@@ -4,7 +4,7 @@ pub use http::OAuthHttpHandler;
 mod client;
 mod http;
 
-use oauth2::{basic::BasicTokenType, EmptyExtraTokenFields, StandardTokenResponse};
+use oauth2::{basic::BasicTokenType, EmptyExtraTokenFields, StandardTokenIntrospectionResponse, StandardTokenResponse};
 
 use serde::Deserialize;
 
@@ -22,8 +22,10 @@ pub struct OAuthConfig {
     pub authorization_redirect_uri: String,
     pub authorization_endpoint: String,
     pub token_endpoint: String,
+    pub introspection_endpoint: Option<String>,
     pub redirect_uri: Option<String>,
     pub default_scopes: Option<Vec<String>>,
 }
 
 pub type AccessToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
+pub type IntrospectionTokenResponse = StandardTokenIntrospectionResponse<EmptyExtraTokenFields, BasicTokenType>;
