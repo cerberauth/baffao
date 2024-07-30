@@ -1,0 +1,21 @@
+meta {
+  name: Get Sessions When Set Cookie
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/sessions
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: jwt=test
+}
+
+assert {
+  res.status: eq 200
+  res.body: isJson
+  res.body.sessions: length 0
+}
