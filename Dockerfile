@@ -11,7 +11,10 @@ FROM gcr.io/distroless/cc-debian12 AS runner
 COPY --from=builder /app/target/release/baffao-proxy /
 COPY --from=builder /app/baffao-proxy/config /config
 
-EXPOSE 3000
+EXPOSE 8080
 
-ENTRYPOINT ["./baffao-proxy"]
-CMD ["./baffao-proxy"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["/app/baffao-server"]
+CMD []

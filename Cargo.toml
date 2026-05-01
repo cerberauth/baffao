@@ -1,7 +1,78 @@
 [workspace]
+members = [
+    "baffao-core",
+    "baffao-backend",
+    "baffao-server",
+    "baffao-wasm",
+]
 resolver = "2"
 
-members = [
-    "baffao",
-    "baffao-proxy",
-]
+[workspace.package]
+version = "0.1.0"
+authors = ["Baffao Contributors"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/baffao/baffao"
+documentation = "https://docs.rs/baffao"
+description = "OAuth 2.0 Backend For Frontend (BFF) and Token-Mediating Backend implementation"
+readme = "README.md"
+keywords = ["oauth", "bff", "authorization", "wasm", "web"]
+categories = ["authentication", "web-programming"]
+
+[workspace.dependencies]
+# HTTP & Web
+axum = { version = "0.7", features = ["macros"] }
+hyper = { version = "1.1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "auth", "compression-full", "fs"] }
+reqwest = { version = "0.12", features = ["json", "cookies"] }
+http = "1.0"
+cookie = { version = "0.18", features = ["secure", "percent-encode"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_urlencoded = "0.7"
+
+# Authentication
+oauth2 = "4.4"
+pkce = "0.2"
+base64 = "0.21"
+rand = "0.8"
+jwt = "0.16"
+jsonwebtoken = "9.2"
+hmac = "0.12"
+sha2 = "0.10"
+
+# WebAssembly
+wasm-bindgen = "=0.2.92"
+js-sys = "=0.3.69"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "=0.3.69", features = [
+    "Headers", "Request", "RequestInit", "RequestMode", "Response",
+    "Window", "Document", "Storage", "Location"
+]}
+getrandom = { version = "0.2", features = ["js"] }
+
+# Logging and error handling
+thiserror = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
+
+# Utilities
+url = "2.5"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+time = "0.3"
+lazy_static = "1.4"
+bytes = "1.5"
+dotenv = "0.15"
+config = "0.13"
+clap = { version = "4.4", features = ["derive", "env"] }
+indexmap = "=2.2.5"

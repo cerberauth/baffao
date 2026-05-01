@@ -1,0 +1,40 @@
+[package]
+name = "baffao-wasm"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "WebAssembly bindings for Baffao OAuth 2.0 implementations"
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Local dependencies
+baffao-core = { path = "../baffao-core", version = "0.1.0", features = ["wasm"] }
+
+# WebAssembly
+wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+web-sys = { workspace = true, features = [
+    "Headers", "Request", "RequestInit", "RequestMode", "RequestCredentials", "Response",
+    "Window", "Document", "Storage", "Location"
+]}
+console_error_panic_hook = "0.1"
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+url = { workspace = true }
+getrandom = { workspace = true, features = ["js"] }
+
+[features]
+default = []

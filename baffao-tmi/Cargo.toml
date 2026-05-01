@@ -1,0 +1,48 @@
+[package]
+name = "baffao-tmi"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "Token-Mediating Backend implementation for OAuth 2.0"
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# Local dependencies
+baffao-core = { path = "../baffao-core", version = "0.1.0" }
+
+# HTTP & Web
+axum = { workspace = true }
+hyper = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+reqwest = { workspace = true, features = ["json", "cookies"] }
+http = { workspace = true }
+cookie = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_urlencoded = { workspace = true }
+
+# Logging and error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+futures = { workspace = true }
+
+# Utilities
+url = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+async-trait = { workspace = true }
+
+[features]
+default = []
