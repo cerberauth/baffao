@@ -1,0 +1,23 @@
+{
+  "server_type": "bff",
+  "port": 3000,
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "auth_url": "https://auth.example.com/oauth2/auth",
+  "token_url": "https://auth.example.com/oauth2/token",
+  "redirect_url": "http://localhost:3000/baffao/auth/callback",
+  "default_scopes": ["openid", "profile", "email"],
+  "session_cookie_name": "__Host-baffao-session",
+  "session_cookie_path": "/",
+  "session_cookie_secure": true,
+  "session_cookie_http_only": true,
+  "session_cookie_same_site": "Strict",
+  "session_max_age": 86400,
+  "base_path": "/baffao",
+  "allowed_proxy_destinations": [
+    "https://api.example.com/users",
+    "https://api.example.com/posts"
+  ],
+  "cors_origin": "http://localhost:8080",
+  "access_token_lifetime": 3600
+}

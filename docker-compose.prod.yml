@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # Baffao OAuth 2.0 server
+  baffao-server:
+    image: ${REGISTRY:-ghcr.io}/baffao/baffao-server:${TAG:-latest}
+    container_name: baffao-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+      - BAFFAO_DATABASE_URL=postgres://baffao:${POSTGRES_PASSWORD}@postgres:5432/baffao
+      - BAFFAO_REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - BAFFAO_BACKEND_TYPE=bff
+      - BAFFAO_SESSION_STORE=postgres
+      - BAFFAO_TOKEN_STORE=redis
+    volumes:
+      - ./config:/app/config
+    restart: unless-stopped
+    deploy:
+      replicas: ${REPLICAS:-2}
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - baffao-network
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: baffao-postgres
+    environment:
+      - POSTGRES_USER=baffao
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=baffao
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U baffao"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - baffao-network
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: baffao-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - baffao-network
+
+  # Traefik reverse proxy for TLS and routing
+  traefik:
+    image: traefik:v2.9
+    container_name: baffao-traefik
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik
+      - traefik-certs:/letsencrypt
+    networks:
+      - baffao-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 256M
+
+volumes:
+  postgres-data:
+  redis-data:
+  traefik-certs:
+
+networks:
+  baffao-network:
+    driver: overlay
+    attachable: true

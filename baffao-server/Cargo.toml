@@ -1,0 +1,48 @@
+[package]
+name = "baffao-server"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "HTTP server for Baffao OAuth 2.0 Backend For Frontend (BFF) and Token-Mediating Backend"
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# Local dependencies
+baffao-core = { path = "../baffao-core", version = "0.1.0" }
+baffao-backend = { path = "../baffao-backend", version = "0.1.0" }
+
+# HTTP & Web
+axum = { workspace = true }
+hyper = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+reqwest = { workspace = true, features = ["json", "cookies"] }
+cookie = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Command line and configuration
+clap = { workspace = true, features = ["derive", "env"] }
+config = { workspace = true }
+dotenv = { workspace = true }
+
+# Logging and error handling
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+
+[[bin]]
+name = "baffao-server"
+path = "src/main.rs"

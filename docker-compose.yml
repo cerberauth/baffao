@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Baffao OAuth 2.0 server
+  baffao-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baffao-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - RUST_LOG=debug
+      - BAFFAO_DATABASE_URL=postgres://baffao:baffao_password@postgres:5432/baffao
+      - BAFFAO_REDIS_URL=redis://redis:6379/0
+      - BAFFAO_BACKEND_TYPE=bff # or 'tmi' for token-mediating backend
+      - BAFFAO_SESSION_STORE=postgres # or 'redis'
+      - BAFFAO_TOKEN_STORE=postgres # or 'redis'
+    volumes:
+      - ./config:/app/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: baffao-postgres
+    environment:
+      - POSTGRES_USER=baffao
+      - POSTGRES_PASSWORD=baffao_password
+      - POSTGRES_DB=baffao
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U baffao"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: baffao-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres-data:
+  redis-data:
